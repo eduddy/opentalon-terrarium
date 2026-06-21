@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>OpenTalon · The Terrarium</title>
+<meta name="description" content="Real-time 2.5D isometric dashboard visualizing the OpenTalon / Agentic Foundry edge-computing cluster as a gameified miniature office on a Raspberry Pi 5 board." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- Boot loader -->
+<div id="boot">
+  <div class="b-inner">
+    <div class="b-title">OPEN&nbsp;TALON</div>
+    <div class="b-line" id="bootline">initializing terrarium substrate…</div>
+  </div>
+</div>
+
+<!-- 3D scene canvas -->
+<div id="scene"></div>
+
+<!-- FUI overlay -->
+<div id="hud">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#9deaff" stroke-width="1.6">
+          <path d="M12 2l3 5 5 1-3.5 3.5L17 17l-5-2.5L7 17l.5-5.5L4 8l5-1 3-5z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>OPEN<span>TALON</span></h1>
+        <p>Living AI Terrarium</p>
+      </div>
+    </div>
+    <div id="tabs">
+      <button class="tab active" data-tab="habitat">Habitat</button>
+      <button class="tab" data-tab="agents">Agents</button>
+      <button class="tab" data-tab="memory">Memory</button>
+      <button class="tab" data-tab="tasks">Tasks</button>
+      <button class="tab" data-tab="system">System</button>
+    </div>
+    <div class="topbar-right">
+      <div class="source-pill" id="source"><span class="dot"></span><span id="source-txt">SIMULATING</span></div>
+      <div id="clock">--:--:--<small id="date">—</small></div>
+    </div>
+  </div>
+
+  <!-- Left column -->
+  <div id="left">
+    <div class="panel" style="padding:16px">
+      <div class="health-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#46e08a" stroke-width="1.8">
+          <path d="M3 12h4l2 5 4-12 2 7h6"/>
+        </svg>
+        <div><div class="panel-title" style="margin:0">System Health</div>
+          <div class="status" id="health-status">Optimal</div></div>
+      </div>
+      <div class="metric-row"><span class="k">CPU</span><span class="v" id="m-cpu">—</span></div>
+      <div class="bar" id="bar-cpu"><i style="width:0%"></i></div>
+      <div class="metric-row"><span class="k">RAM</span><span class="v" id="m-ram">—</span></div>
+      <div class="bar" id="bar-ram"><i style="width:0%"></i></div>
+      <div class="metric-row"><span class="k">TEMP</span><span class="v" id="m-temp">—</span></div>
+      <div class="bar" id="bar-temp"><i style="width:0%"></i></div>
+      <div class="metric-row"><span class="k">NITRO LLM</span><span class="v" id="m-nitro">—</span></div>
+      <div class="bar" id="bar-nitro"><i style="width:0%"></i></div>
+      <div class="metric-row"><span class="k">MQTT</span><span class="v" id="m-mqtt">—</span></div>
+      <div class="metric-row"><span class="k">UPTIME</span><span class="v" id="m-uptime">—</span></div>
+    </div>
+
+    <div class="panel" style="padding:16px; flex:1; display:flex; flex-direction:column; min-height:0">
+      <div class="panel-title">Live Feed <span style="color:var(--green); margin-left:auto">● All Systems Normal</span></div>
+      <div id="feed-list"></div>
+    </div>
+
+    <div class="panel" style="padding:16px">
+      <div class="panel-title">Agent Status</div>
+      <div id="agent-status"></div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div id="right">
+    <div class="panel" style="padding:16px">
+      <div class="panel-title">Approval Queue <span id="approval-count" style="margin-left:auto;color:var(--amber)">0 PENDING</span></div>
+      <div id="approval-list"></div>
+    </div>
+    <div class="panel milestone" style="padding:16px">
+      <div class="panel-title">Latest Milestone</div>
+      <div class="m-title">WebSocket Bridge Online ✓</div>
+      <p>Real-time agent communication established across the habitat. The team can now react in real-time.</p>
+    </div>
+    <div class="panel" style="padding:16px">
+      <div class="panel-title">Team Summary</div>
+      <div class="summary-row"><span>Agents</span><span class="n">4</span></div>
+      <div class="summary-row"><span>Proposals</span><span class="n" id="s-proposals">27</span></div>
+      <div class="summary-row"><span>Tasks Completed</span><span class="n" id="s-tasks">312</span></div>
+      <div class="summary-row"><span>Approval Rate</span><span class="n">92%</span></div>
+    </div>
+  </div>
+
+  <!-- Mode bar -->
+  <div id="modebar">
+    <div class="mode" data-mode="ambient"><span class="ic" style="color:var(--purple)">✦</span>
+      <div><div class="lbl">Ambient</div><div class="sub">Relaxed, minimal</div></div></div>
+    <div class="mode active" data-mode="insight"><span class="ic" style="color:var(--cyan)">◈</span>
+      <div><div class="lbl">Insight</div><div class="sub">Balanced view</div></div></div>
+    <div class="mode" data-mode="sysop"><span class="ic" style="color:var(--green)">⬡</span>
+      <div><div class="lbl">Sysop</div><div class="sub">Full control</div></div></div>
+    <div class="mode" data-mode="public"><span class="ic" style="color:var(--text-dim)">◍</span>
+      <div><div class="lbl">Public</div><div class="sub">Curated overview</div></div></div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend" class="panel" style="padding:12px 14px">
+    <div class="legend-item"><span class="sw" style="background:var(--cyan)"></span>Signal route</div>
+    <div class="legend-item"><span class="sw" style="background:var(--amber)"></span>Reasoning (NitroLLM)</div>
+    <div class="legend-item"><span class="sw" style="background:var(--green)"></span>Approval / Keeper</div>
+    <div class="legend-item"><span class="sw" style="background:var(--purple)"></span>Memory write</div>
+  </div>
+
+  <div class="hint">DRAG to orbit · SCROLL to zoom · CLICK a station<br/>SYSOP mode enables INJECT + approvals</div>
+
+  <!-- Station tooltip -->
+  <div id="tooltip"></div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
